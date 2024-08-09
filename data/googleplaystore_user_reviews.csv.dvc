@@ -1,0 +1,5 @@
+outs:
+- md5: 9ebc8cff6d1c10821d1afbc22c381bee
+  size: 7669276
+  hash: md5
+  path: googleplaystore_user_reviews.csv
