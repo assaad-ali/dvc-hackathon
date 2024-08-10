@@ -1,0 +1,5 @@
+outs:
+- md5: 0b55dd7d9d1ab6ace5b18deb62724f95
+  size: 412844
+  hash: md5
+  path: version_2010_2017.csv
