@@ -1,0 +1,5 @@
+outs:
+- md5: 57244797239603e85f5237fe059b0787
+  size: 1137073
+  hash: md5
+  path: version_2016_2018.csv
