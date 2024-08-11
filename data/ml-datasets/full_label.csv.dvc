@@ -1,0 +1,5 @@
+outs:
+- md5: 79fa542ce8ba0cbdf5fd7fe04173d23a
+  size: 759962
+  hash: md5
+  path: full_label.csv
