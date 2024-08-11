@@ -1,4 +1,4 @@
 [core]
-    remote = gdrive
-['remote "gdrive"']
-    url = gdrive://1lZCKh-Y7QhA7eO1scOzOaX9POBrgSJjr
+    remote = s3
+['remote "s3"']
+    url = s3://fsd-hackathon-2024-08-11/sef-hackathon/
