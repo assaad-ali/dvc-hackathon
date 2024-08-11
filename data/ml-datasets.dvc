@@ -1,0 +1,6 @@
+outs:
+- md5: 323f9a8d3fe443782dd7f3f954ccaf91.dir
+  size: 20256030
+  nfiles: 10
+  hash: md5
+  path: ml-datasets
