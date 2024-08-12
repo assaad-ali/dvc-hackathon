@@ -10,6 +10,92 @@ def main():
     df = load_data()
     df_unique = df.drop_duplicates(subset='App').copy()
 
+    st.sidebar.header('Bar Chart Customization')
+    
+    # User selects the variable to display on the bar chart
+    bar_chart_type = st.sidebar.selectbox(
+        "Select Bar Chart Type",
+        options=[
+            "Number of Apps",
+            "Average Rating",
+            "Distribution of Installs"
+        ]
+    )
+    
+    # User selects whether to group by Category or Genre
+    group_by_option = st.sidebar.radio(
+        "Group by:",
+        options=["Category", "Genres"]
+    )
+    
+    # User selects the year or range of years
+    min_year = int(df_unique['year'].min())
+    max_year = int(df_unique['year'].max())
+    
+    selected_years = st.sidebar.slider(
+        'Select Year Range:',
+        min_year,
+        max_year,
+        (min_year, max_year)
+    )
+    
+    # Filter data by the selected year range
+    df_filtered = df_unique[(df_unique['year'] >= selected_years[0]) & (df_unique['year'] <= selected_years[1])]
+
+    # Grouping the filtered data
+    df_grouped = df_filtered.groupby(group_by_option).agg({
+        'App': 'count',
+        'Rating': 'mean',
+        'Installs': 'sum'
+    }).reset_index()
+    
+    # Calculate total number of apps
+    total_apps = df_grouped['App'].sum()
+    
+    # Creating the appropriate bar chart based on user selection
+    if bar_chart_type == "Number of Apps":
+        fig = go.Figure(data=[go.Bar(
+            x=df_grouped[group_by_option],
+            y=df_grouped['App'],
+            marker_color='indianred'
+        )])
+        fig.update_layout(
+            title=f'Number of Apps by {group_by_option} ({selected_years[0]} - {selected_years[1]})<br>Total Number of Apps: {total_apps}',
+            xaxis_title=group_by_option,
+            yaxis_title='Number of Apps'
+        )
+    elif bar_chart_type == "Average Rating":
+        fig = go.Figure(data=[go.Bar(
+            x=df_grouped[group_by_option],
+            y=df_grouped['Rating'],
+            marker_color='lightsalmon'
+        )])
+        fig.update_layout(
+            title=f'Average Rating by {group_by_option} ({selected_years[0]} - {selected_years[1]})<br>Total Number of Apps: {total_apps}',
+            xaxis_title=group_by_option,
+            yaxis_title='Average Rating'
+        )
+    elif bar_chart_type == "Distribution of Installs":
+        fig = go.Figure(data=[go.Bar(
+            x=df_grouped[group_by_option],
+            y=df_grouped['Installs'],
+            marker_color='lightblue'
+        )])
+        fig.update_layout(
+            title=f'Distribution of Installs by {group_by_option} ({selected_years[0]} - {selected_years[1]})<br>Total Number of Apps: {total_apps}',
+            xaxis_title=group_by_option,
+            yaxis_title='Total Installs'
+        )
+    
+    # Displaying the bar chart
+    st.write(f"{bar_chart_type} ({selected_years[0]} - {selected_years[1]})")
+    st.plotly_chart(fig)
+    
+    # Displaying the table with the grouped data
+    st.write("Table Data")
+    st.dataframe(df_grouped)
+
+    
     # Sidebar for Bar Chart Filters
     st.sidebar.header('Bar Chart Filters')
     bar_chart_category = st.sidebar.selectbox('Select Category for Bar Chart:', df['Category'].unique(), index=0)
