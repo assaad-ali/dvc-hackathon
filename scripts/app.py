@@ -8,83 +8,146 @@ def load_data():
 # Main function
 def main():
     df = load_data()
+    df_unique = df.drop_duplicates(subset='App').copy()
 
-    # sidebar for filtering options
-    st.sidebar.header('Filter Options')
+    # Sidebar for Bar Chart Filters
+    st.sidebar.header('Bar Chart Filters')
+    bar_chart_category = st.sidebar.selectbox('Select Category for Bar Chart:', df['Category'].unique(), index=0)
 
-    # category filter
-    selected_category = st.sidebar.selectbox('Select Category:', df['Category'].unique())
-    df_filtered = df[df['Category'] == selected_category]
+    # Filtering the dataset by the selected category before setting sliders
+    df_bar_filtered_category = df_unique[df_unique['Category'] == bar_chart_category]
 
-    # rating filter
-    rating_filter = st.sidebar.slider(
-        'Filter by Rating:', 
-        float(df['Rating'].min()), 
-        float(df['Rating'].max()), 
-        float(df['Rating'].median())
+    # Setting default slider values to avoid errors
+    min_rating = df_bar_filtered_category['Rating'].min()
+    max_rating = df_bar_filtered_category['Rating'].max()
+    if min_rating == max_rating:
+        min_rating = max_rating - 1
+
+    min_price = df_bar_filtered_category['Price'].min()
+    max_price = df_bar_filtered_category['Price'].max()
+    if min_price == max_price:
+        min_price = max_price - 1
+
+    min_year = int(df_bar_filtered_category['year'].min())
+    max_year = int(df_bar_filtered_category['year'].max())
+    if min_year == max_year:
+        min_year = max_year - 1
+
+    bar_chart_rating_filter = st.sidebar.slider(
+        'Filter by Rating for Bar Chart:',
+        min_rating,
+        max_rating,
+        df_bar_filtered_category['Rating'].mean()
     )
-    df_filtered = df_filtered[df_filtered['Rating'] <= rating_filter]
-
-    # price filter
-    price_filter = st.sidebar.slider(
-        'Filter by Price:', 
-        float(df['Price'].min()), 
-        float(df['Price'].max()), 
-        float(df['Price'].median())
+    bar_chart_price_filter = st.sidebar.slider(
+        'Filter by Price for Bar Chart:',
+        min_price,
+        max_price,
+        df_bar_filtered_category['Price'].mean()
     )
-    df_filtered = df_filtered[df_filtered['Price'] <= price_filter]
-
-    # year added filter
-    year_added_filter = st.sidebar.slider(
-        'Filter by Year Added:', 
-        int(df['year_added'].min()), 
-        int(df['year_added'].max()), 
-        int(df['year_added'].median())
-    )
-    df_filtered = df_filtered[df_filtered['year_added'] <= year_added_filter]
-
-    # variable selection for pie chart
-    st.sidebar.header('Select Variable for Pie Chart')
-    pie_chart_variable = st.sidebar.selectbox(
-        'Select variable for the pie chart:',
-        options=['Rating', 'Price', 'year_added']
+    bar_chart_year_filter = st.sidebar.slider(
+        'Filter by Year Added for Bar Chart:',
+        min_year,
+        max_year,
+        int(df_bar_filtered_category['year'].mean())
     )
 
-    # variable selection for bar chart
-    st.sidebar.header('Select Variable for Bar Chart')
+    df_bar_filtered = df_bar_filtered_category[
+        (df_bar_filtered_category['Rating'] <= bar_chart_rating_filter) &
+        (df_bar_filtered_category['Price'] <= bar_chart_price_filter) &
+        (df_bar_filtered_category['year'] <= bar_chart_year_filter)
+    ]
+
+    # Plotly Bar Chart
     bar_chart_variable = st.sidebar.selectbox(
-        'Select variable for the bar chart:',
-        options=['Rating', 'Price', 'year_added']
+        "Bar Chart Variable",
+        options=['Rating', 'Price', 'year']
+    )
+    bar_variable_counts = df_bar_filtered[bar_chart_variable].value_counts().sort_index()
+    fig_bar = go.Figure(data=[go.Bar(
+        x=bar_variable_counts.index,
+        y=bar_variable_counts.values
+    )])
+    fig_bar.update_layout(title_text=f'Number of Apps by {bar_chart_variable}', xaxis_title=bar_chart_variable, yaxis_title='Number of Apps')
+    st.write("Bar Chart")
+    st.plotly_chart(fig_bar)
+
+    # Display Bar Chart Table
+    columns_to_display_bar = ['App', 'Category', 'Rating', 'Price', 'year']
+    df_display_bar = df_bar_filtered[columns_to_display_bar].reset_index(drop=True)
+    df_display_bar['year'] = df_display_bar['year'].astype(str)
+    st.write("Bar Chart Data")
+    st.dataframe(df_display_bar)
+
+    # Sidebar for Pie Chart Filters
+    st.sidebar.header('Pie Chart Filters')
+    pie_chart_category = st.sidebar.selectbox('Select Category for Pie Chart:', df['Category'].unique(), index=0)
+
+    # Filtering the dataset by the selected category before setting sliders
+    df_pie_filtered_category = df_unique[df_unique['Category'] == pie_chart_category]
+
+    # Setting default slider values to avoid errors
+    min_rating = df_pie_filtered_category['Rating'].min()
+    max_rating = df_pie_filtered_category['Rating'].max()
+    if min_rating == max_rating:
+        min_rating = max_rating - 1
+
+    min_price = df_pie_filtered_category['Price'].min()
+    max_price = df_pie_filtered_category['Price'].max()
+    if min_price == max_price:
+        min_price = max_price - 1
+
+    min_year = int(df_pie_filtered_category['year'].min())
+    max_year = int(df_pie_filtered_category['year'].max())
+    if min_year == max_year:
+        min_year = max_year - 1
+
+    pie_chart_rating_filter = st.sidebar.slider(
+        'Filter by Rating for Pie Chart:',
+        min_rating,
+        max_rating,
+        df_pie_filtered_category['Rating'].mean()
+    )
+    pie_chart_price_filter = st.sidebar.slider(
+        'Filter by Price for Pie Chart:',
+        min_price,
+        max_price,
+        df_pie_filtered_category['Price'].mean()
+    )
+    pie_chart_year_filter = st.sidebar.slider(
+        'Filter by Year Added for Pie Chart:',
+        min_year,
+        max_year,
+        int(df_pie_filtered_category['year'].mean())
     )
 
-    # diplay table data
-    columns_to_display = ['App', 'Category', 'Rating', 'Price', 'year_added']
-    df_display = df_filtered[columns_to_display]
-    st.write(f"Showing data for category: {selected_category} with selected filters")
-    st.dataframe(df_display)
+    df_pie_filtered = df_pie_filtered_category[
+        (df_pie_filtered_category['Rating'] <= pie_chart_rating_filter) &
+        (df_pie_filtered_category['Price'] <= pie_chart_price_filter) &
+        (df_pie_filtered_category['year'] <= pie_chart_year_filter)
+    ]
 
-
-    pie_variable_counts = df_filtered[pie_chart_variable].value_counts().sort_index()
-
-    # plotly pie chart
+    # Plotly Pie Chart
+    pie_chart_variable = st.sidebar.selectbox(
+        "Pie Chart Variable",
+        options=['Rating', 'Price', 'year']
+    )
+    pie_variable_counts = df_pie_filtered[pie_chart_variable].value_counts().sort_index()
     fig_pie = go.Figure(data=[go.Pie(
         labels=pie_variable_counts.index,
         values=pie_variable_counts.values,
         hoverinfo='label+value+percent'
     )])
-
-    fig_pie.update_layout(title_text=f'Distribution of Apps by {pie_chart_variable} within Selected Category')
+    fig_pie.update_layout(title_text=f'Distribution of Apps by {pie_chart_variable} within {pie_chart_category}')
+    st.write("Pie Chart")
     st.plotly_chart(fig_pie)
 
-    # plotly bar chart
-    bar_variable_counts = df_filtered[bar_chart_variable].value_counts().sort_index()
-    fig_bar = go.Figure(data=[go.Bar(
-        x=bar_variable_counts.index,
-        y=bar_variable_counts.values
-    )])
-
-    fig_bar.update_layout(title_text=f'Number of Apps by {bar_chart_variable}', xaxis_title=bar_chart_variable, yaxis_title='Number of Apps')
-    st.plotly_chart(fig_bar)
+    # Display Pie Chart Table
+    columns_to_display_pie = ['App', 'Category', 'Rating', 'Price', 'year']
+    df_display_pie = df_pie_filtered[columns_to_display_pie].reset_index(drop=True)
+    df_display_pie['year'] = df_display_pie['year'].astype(str)
+    st.write("Pie Chart Data")
+    st.dataframe(df_display_pie)
 
 if __name__ == "__main__":
     main()
