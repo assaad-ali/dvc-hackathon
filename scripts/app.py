@@ -95,7 +95,91 @@ def main():
     st.write("Table Data")
     st.dataframe(df_grouped)
 
+    st.sidebar.header('Line Chart Customization')
     
+    # User selects the variable to display on the line chart
+    line_chart_type = st.sidebar.selectbox(
+        "Select Line Chart Type",
+        options=[
+            "Rating Trends Over Time",
+            "Installs Over Time",
+            "Price Evolution"
+        ]
+    )
+    
+    # User selects the time variable (Last Updated, year, or month)
+    time_variable = st.sidebar.selectbox(
+        "Select Time Variable:",
+        options=["Last Updated", "year", "month"]
+    )
+    df_time_based = df.copy()
+    # User selects the year or range of years
+    min_year = int(df_time_based['year'].min())
+    max_year = int(df_time_based['year'].max())
+    
+    selected_years = st.sidebar.slider(
+        'Select Year Range for Line Chart:',
+        min_year,
+        max_year,
+        (min_year, max_year)
+    )
+    
+    # Filter data by the selected year range
+    df_filtered = df_time_based[(df_time_based['year'] >= selected_years[0]) & (df_time_based['year'] <= selected_years[1])]
+
+    # Grouping the filtered data by the selected time variable
+    df_grouped = df_filtered.groupby(time_variable).agg({
+        'Rating': 'mean',
+        'Installs': 'sum',
+        'Price': 'mean'
+    }).reset_index()
+    
+    # Creating the appropriate line chart based on user selection
+    if line_chart_type == "Rating Trends Over Time":
+        fig = go.Figure(data=[go.Scatter(
+            x=df_grouped[time_variable],
+            y=df_grouped['Rating'],
+            mode='lines',
+            line=dict(color='royalblue', width=2)
+        )])
+        fig.update_layout(
+            title=f'Rating Trends Over Time ({selected_years[0]} - {selected_years[1]})',
+            xaxis_title=time_variable,
+            yaxis_title='Average Rating'
+        )
+    elif line_chart_type == "Installs Over Time":
+        fig = go.Figure(data=[go.Scatter(
+            x=df_grouped[time_variable],
+            y=df_grouped['Installs'],
+            mode='lines',
+            line=dict(color='seagreen', width=2)
+        )])
+        fig.update_layout(
+            title=f'Installs Over Time ({selected_years[0]} - {selected_years[1]})',
+            xaxis_title=time_variable,
+            yaxis_title='Total Installs'
+        )
+    elif line_chart_type == "Price Evolution":
+        fig = go.Figure(data=[go.Scatter(
+            x=df_grouped[time_variable],
+            y=df_grouped['Price'],
+            mode='lines',
+            line=dict(color='orange', width=2)
+        )])
+        fig.update_layout(
+            title=f'Price Evolution Over Time ({selected_years[0]} - {selected_years[1]})',
+            xaxis_title=time_variable,
+            yaxis_title='Average Price'
+        )
+    
+    # Displaying the line chart
+    st.write(f"{line_chart_type} ({selected_years[0]} - {selected_years[1]})")
+    st.plotly_chart(fig)
+
+    # Displaying the table with the grouped data
+    st.write("Table Data")
+    st.dataframe(df_grouped)
+
     # Sidebar for Bar Chart Filters
     st.sidebar.header('Bar Chart Filters')
     bar_chart_category = st.sidebar.selectbox('Select Category for Bar Chart:', df['Category'].unique(), index=0)
