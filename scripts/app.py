@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objs as go
+import plotly.figure_factory as ff
+import plotly.express as px
 
 def load_data():
     return pd.read_csv('C:/Users/HES/Desktop/Work/SE Factory/Hackathon/app-vice/dvc-hackathon/dashboard.csv')
@@ -10,6 +12,92 @@ def main():
     df = load_data()
     df_unique = df.drop_duplicates(subset='App').copy()
 
+
+######################### Heat map ######################
+
+    st.sidebar.header('Heatmap Customization')
+
+    # User selects the type of heatmap to display
+    heatmap_type = st.sidebar.selectbox(
+        "Select Heatmap Type",
+        options=[
+            "Correlation Heatmap",
+            "Time-based Heatmap"
+        ]
+    )
+
+    if heatmap_type == "Correlation Heatmap":
+        # Selecting variables for correlation heatmap
+        numerical_vars = ['Rating', 'Reviews', 'Installs', 'Size', 'Price']
+        selected_vars = st.sidebar.multiselect(
+            'Select Variables for Correlation Heatmap',
+            options=numerical_vars,
+            default=numerical_vars
+        )
+
+        # Calculate correlation matrix
+        if selected_vars:
+            corr_matrix = df_unique[selected_vars].corr()
+
+            # Ensure the correlation matrix is not empty
+            if not corr_matrix.empty:
+                # Creating the heatmap
+                fig = ff.create_annotated_heatmap(
+                    z=corr_matrix.values,
+                    x=corr_matrix.columns.to_list(),
+                    y=corr_matrix.index.to_list(),
+                    colorscale='Viridis',
+                    showscale=True
+                )
+                fig.update_layout(
+                    title='Correlation Heatmap',
+                    xaxis_title='Variables',
+                    yaxis_title='Variables'
+                )
+                
+                # Displaying the heatmap
+                st.write("Correlation Heatmap")
+                st.plotly_chart(fig)
+            else:
+                st.write("Correlation matrix is empty. Please select different variables.")
+    
+    elif heatmap_type == "Time-based Heatmap":
+        # Convert 'Last Updated' to datetime if it's not already
+        if not pd.api.types.is_datetime64_any_dtype(df['Last Updated']):
+            df['Last Updated'] = pd.to_datetime(df['Last Updated'])
+
+        # Aggregating data for time-based heatmap
+        df['month_added'] = df['Last Updated'].dt.to_period('M')
+        df['year_added'] = df['Last Updated'].dt.year
+        df_grouped = df.groupby(['year_added', 'month_added']).size().unstack(fill_value=0)
+
+        # Ensure the grouped data is not empty
+        if not df_grouped.empty:
+            # Creating the heatmap
+            fig = ff.create_annotated_heatmap(
+                z=df_grouped.values,
+                x=df_grouped.columns.to_list(),
+                y=df_grouped.index.to_list(),
+                colorscale='Blues',
+                showscale=True
+            )
+            fig.update_layout(
+                title='Time-based Heatmap of App Additions',
+                xaxis_title='Month Added',
+                yaxis_title='Year Added'
+            )
+            
+            # Displaying the heatmap
+            st.write("Time-based Heatmap")
+            st.plotly_chart(fig)
+        else:
+            st.write("No data available for the selected time range.")
+    
+    # Displaying the table with the grouped data
+    st.write("Table Data")
+    st.dataframe(df_unique.describe())
+
+######################### bar chart ###############################
     st.sidebar.header('Bar Chart Customization')
     
     # User selects the variable to display on the bar chart
@@ -96,7 +184,8 @@ def main():
     st.dataframe(df_grouped)
 
     st.sidebar.header('Line Chart Customization')
-    
+
+############################# Line Chart ###############################
     # User selects the variable to display on the line chart
     line_chart_type = st.sidebar.selectbox(
         "Select Line Chart Type",
