@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.graph_objs as go
 
 def load_data():
-    return pd.read_csv('../data/analysis-data/dashboard.csv')
+    return pd.read_csv('C:/Users/HES/Desktop/Work/SE Factory/Hackathon/app-vice/dvc-hackathon/dashboard.csv')
 
 # Main function
 def main():
